@@ -16,9 +16,9 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	//controllers.NewApplication(databases.(*mongo.Client)(ProductData()(databases.client, "Products"), databases.UserData(databases.Client, "Users")))
 
-	app := controllers.NewApplication(databases.ProductData(databases.client, "Products"), databases.UserData(databases.Client, "Users"))
-
+	app := controllers.NewApplication(databases.ProductData(databases.Client, "Products"), databases.UserData(databases.Client, "Users"))
 	router := gin.New()
 	router.Use(gin.Logger())
 
@@ -26,8 +26,8 @@ func main() {
 	router.Use(middlewares.Authentication())
 
 	router.GET("/addtocart", app.AddToCart())
-	router.GET("/removeitems", app.RemoveItems())
-	router.GET("/cartcheckout", app.CartCheckout())
+	router.GET("/removeitems", app.RemoveItem())
+	router.GET("/cartcheckout", app.GetItemFromCart())
 	router.GET("/instantbuy", app.InstantBuy())
 
 	log.Fatal(router.Run(":" + port))

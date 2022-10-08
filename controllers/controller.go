@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go_ecommerce/databases"
 	"go_ecommerce/models"
+	jwt "go_ecommerce/tokens"
 	"log"
 	"net/http"
 	"time"
@@ -89,7 +90,7 @@ func SignUp() gin.HandlerFunc {
 		user.Update_At, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 		user.ID = primitive.NewObjectID()
 		user.User_ID = user.ID.Hex()
-		token, refreshToken := generate.TokenGenerator(*user.Email, *user.First_Name, *user.Last_Name, *user.User_ID)
+		token, refreshToken, _ := jwt.TokenGenerator(*user.Email, *user.First_Name, *user.Last_Name, *&user.User_ID)
 		user.Token = &token
 		user.Refresh_Token = &refreshToken
 		user.UserCart = make([]models.ProductUser, 0)
@@ -112,6 +113,7 @@ func LogIn() gin.HandlerFunc {
 		defer cancel()
 
 		var user models.User
+		var foundUser models.User
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			return
@@ -133,9 +135,9 @@ func LogIn() gin.HandlerFunc {
 			fmt.Println(msg)
 			return
 		}
-		token, refreshToken, _ := generate.TokenGenerator(*founderUser.Email, *founderUSer.Password, *founderUser.FirstName, *founderUser.User_ID)
+		token, refreshToken, _ := jwt.TokenGenerator(*foundUser.Email, *foundUser.Password, *foundUser.First_Name, *&foundUser.User_ID)
 
-		generate.updateAllToken(token, refreshToken, founderUser.User_ID)
+		jwt.UpdateAllToken(token, refreshToken, foundUser.User_ID)
 
 		c.JSON(http.StatusFound, foundUser)
 
@@ -143,7 +145,24 @@ func LogIn() gin.HandlerFunc {
 }
 
 func ProductViewerAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
+		var products models.Product
+		if err := c.BindJSON(&products); err != nil {
+			c.IndentedJSON(http.StatusUnprocessableEntity, gin.H{"Message": err})
+			return
+		}
+		products.ProductID = primitive.NewObjectID()
+		_, collection := prodCollection.InsertOne(ctx, &products)
+		if collection != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"Message": "Not Inserted"})
+			return
+		}
+		defer cancel()
+		c.IndentedJSON(http.StatusOK, gin.H{"Message": "Successful added"})
+	}
 }
 
 func SearchProduct() gin.HandlerFunc {
