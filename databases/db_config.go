@@ -12,7 +12,7 @@ import (
 )
 
 func DBConfig() *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://tito:@cluster0.fqwnb.mongodb.net/test"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,9 +26,12 @@ func DBConfig() *mongo.Client {
 	err = Ping(client, ctx)
 	if err != nil {
 		fmt.Println("Failed Connecting to mongoDB")
+		return nil
 	}
 	fmt.Println("Successfully Connected to the mongodb")
+	defer Close(client, ctx, cancel)
 	return client
+
 }
 
 func Close(client *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
