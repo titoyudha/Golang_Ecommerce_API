@@ -8,6 +8,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 func DBConfig() *mongo.Client {
@@ -22,13 +23,37 @@ func DBConfig() *mongo.Client {
 		log.Fatal(err)
 	}
 
-	err = client.Ping(context.TODO(), nil)
+	err = Ping(client, ctx)
 	if err != nil {
-		log.Println("failed to connect to mongodb")
-		return nil
+		fmt.Println("Failed Connecting to mongoDB")
 	}
 	fmt.Println("Successfully Connected to the mongodb")
 	return client
+}
+
+func Close(client *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
+	defer cancel()
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
+}
+
+func Connect(uri string) (*mongo.Client, context.Context, context.CancelFunc, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	return client, ctx, cancel, err
+}
+
+func Ping(client *mongo.Client, ctx context.Context) error {
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		return err
+	}
+	fmt.Println("Connected to mongoDB")
+	return nil
 }
 
 var Client *mongo.Client = DBConfig()
