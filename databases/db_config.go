@@ -11,7 +11,7 @@ import (
 )
 
 func DBConfig() *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://development:testpassword@localhost:27017"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://tito:@cluster0.fqwnb.mongodb.net/test"))
 	if err != nil {
 		log.Fatal(err)
 	}

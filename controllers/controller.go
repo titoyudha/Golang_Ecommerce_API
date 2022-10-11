@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"go_ecommerce/cache"
 	"go_ecommerce/databases"
 	"go_ecommerce/models"
 	jwt "go_ecommerce/tokens"
@@ -21,6 +22,11 @@ import (
 var userCollection *mongo.Collection = databases.UserData(databases.Client, "Users")
 var prodCollection *mongo.Collection = databases.ProductData(databases.Client, "Products")
 var Validate = validator.New()
+
+var (
+	redisCache cache.RedisCache
+	userCache  cache.UserCache
+)
 
 func HashPassword(password string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 15)
@@ -48,6 +54,7 @@ func SignUp() gin.HandlerFunc {
 		defer cancel()
 
 		var user models.User
+
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err})
 			return
@@ -97,6 +104,12 @@ func SignUp() gin.HandlerFunc {
 		user.Address_Details = make([]models.Address, 0)
 		user.Order_Status = make([]models.Order, 0)
 
+		var cacheID = user.ID.Hex()
+		var userCache *models.User = userCache.Get(cacheID)
+		if userCache == nil {
+			return
+		}
+		redisCache.Set(cacheID, userCache)
 		_, insertErr := userCollection.InsertOne(ctx, user)
 		if insertErr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "The User didn't get created"})
