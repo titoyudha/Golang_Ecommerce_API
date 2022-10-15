@@ -50,7 +50,7 @@ func VerifyPassword(userPassword string, givenPassword string) (bool, string) {
 
 func SignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 50*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		var user models.User

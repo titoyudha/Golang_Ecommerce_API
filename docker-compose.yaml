@@ -5,7 +5,7 @@ services:
   mongo:
     image: mongo:5.0.3
     ports:
-      - 27017:27017
+      - 27016:27018
     environment:
       MONGO_INITDB_ROOT_USERNAME: development
       MONGO_INITDB_ROOT_PASSWORD: testpassword

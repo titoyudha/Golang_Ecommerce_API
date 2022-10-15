@@ -54,7 +54,7 @@ func (app *App) AddToCart() gin.HandlerFunc {
 		var c, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		err = databases.AddProductToChart(c, app.prodCollection, app.userCollection, productID, userQueryID)
+		err = databases.AddProductToCart(c, app.prodCollection, app.userCollection, productID, userQueryID)
 		if err != nil {
 			ctx.IndentedJSON(http.StatusInternalServerError, err)
 			return
